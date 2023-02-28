@@ -15,7 +15,6 @@ import PreferencesAllergies from "./pages/PreferencesAllergies";
 import MealPlan from "./pages/MealPlan";
 import "./App.css";
 
-import { CircularProgress, LinearProgress } from "@mui/material";
 
 import { OpenAIApi, Configuration } from "openai"
 import Loading from "./pages/Loading";
@@ -25,32 +24,32 @@ function App() {
   // create steps for stepper
   const steps = ["Get BMI", "Food Preferences & Allergies", "Meal Plan"];
 
-  const [activeStep, setActiveStep] = React.useState(2);
+  const [activeStep, setActiveStep] = React.useState(0);
 
 
 
-
-  // const [formState, setFormState] = React.useState({
-  //   age: 0,
-  //   height: 0,
-  //   weight: 0,
-  //   gender: "",
-  //   mode: "",
-  //   loseOrGain: "",
-  //   allergies: [],
-  //   preferences: [],
-  // });
 
   const [formState, setFormState] = React.useState({
-    age: "21",
-    height: "180",
-    weight: "80",
-    gender: "male",
-    mode: "vegan",
-    loseOrGain: "lose",
-    allergies: ["milk"],
-    preferences: ["chicken"],
+    age: 0,
+    height: 0,
+    weight: 0,
+    gender: "",
+    mode: "",
+    loseOrGain: "",
+    allergies: [],
+    preferences: [],
   });
+
+  // const [formState, setFormState] = React.useState({
+  //   age: "21",
+  //   height: "180",
+  //   weight: "80",
+  //   gender: "male",
+  //   mode: "vegan",
+  //   loseOrGain: "lose",
+  //   allergies: ["milk"],
+  //   preferences: ["chicken"],
+  // });
 
   const [mealPlan, setMealPlan] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
@@ -144,7 +143,7 @@ function App() {
                 sx={{
                   mt: 3,
                   ml: 1,
-                  display: activeStep === steps.length - 2 ? "none" : "block",
+                  display: activeStep >= steps.length - 2 ? "none" : "block",
                 }}
               >
                 NEXT
@@ -170,7 +169,7 @@ function App() {
                       My first request is 'BMI: ${BMI}, Preferences: ${formState.preferences.join(", ")}, Allergies: ${formState.allergies.join(", ")}'
                       
                       `,
-                      max_tokens: 3900,
+                      max_tokens: 2000,
 
 
                     })

@@ -5,6 +5,15 @@ import React, { useMemo } from 'react';
 
 import MaterialReactTable from 'material-react-table';
 import { Box } from '@mui/system';
+import { Button, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+
+import { Modal, } from '@mui/material';
+
+
+
+
+import { OpenAIApi, Configuration } from "openai"
 
 
 const csv = `
@@ -75,7 +84,9 @@ const CSVParse = (csv) => {
     for (let j = 0; j < headers.length; j++) {
 
       if (headers[j] === "Calories" || headers[j] === "Carbs" || headers[j] === "Fats" || headers[j] === "Protein") {
+        //TODO: parse to float with 2 decimal places
         obj[headers[j]] = parseFloat(currentline[j])
+
       } else
 
         obj[headers[j]] = currentline[j];
@@ -84,12 +95,79 @@ const CSVParse = (csv) => {
   }
   return data;
 };
-
+const style = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 400,
+  bgcolor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4,
+  alignItems: 'center',
+  justifyContent: 'center',
+  display: 'flex',
+  flexDirection: 'column'
+};
+const config = new Configuration({ apiKey: "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" })
 
 const MealPlan = ({ mealPlan }) => {
   // console.log(CSVParse(mealPlan))
 
   const data = CSVParse(csv);
+
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = () => setOpen(true);
+
+  const [recipe, setRecipe] = React.useState(null);
+  const [foodImage, setfoodImage] = React.useState(null);
+  const [recipeName, setRecipeName] = React.useState(null);
+  // console.log()
+  const [recipeLoading, setRecipeLoading] = React.useState(false);
+
+  const handleClose = () => {
+    setOpen(false);
+    setRecipe(null);
+    setRecipeName(null);
+  }
+
+  const fetchRecipe = async (food, quantity) => {
+    try {
+      setRecipeLoading(true);
+      const api = new OpenAIApi(config)
+
+      const img = await api.createImage({
+        prompt: `Image of ${food}`,
+        n: 1,
+        size: '256x256'
+      })
+console.log(img)
+      const result = await api.createCompletion({
+        model: "text-davinci-003",
+
+        prompt: `
+        I want you to act as my personal chef. 
+        I will tell you about a meal with its quantities, and you will tell me the exact recipe for me to cook it.
+        You should only reply with the recipe, and nothing else. The recipe should include the exact ingredients needed and a numbered list of steps to follow. 
+        Do not write explanations. My first request is ${food}. Quantity: ${quantity}
+        `,
+
+        max_tokens: 2000,
+      })
+
+      setRecipe(result.data.choices[0].text);
+      setRecipeName(food);
+      setfoodImage(img.data?.data?.[0]?.url);
+    } finally {
+
+      setRecipeLoading(false);
+    }
+
+  }
+  console.log(foodImage)
+
+
   const columns = useMemo(
     () => [
       {
@@ -117,6 +195,29 @@ const MealPlan = ({ mealPlan }) => {
       {
         header: "Food",
         accessorKey: "Food",
+
+        Cell: ({ cell, row }) => {
+          return (
+            <div><strong>{cell.getValue()}</strong>
+
+              <Tooltip title="View" aria-label="view">
+                <IconButton
+                  aria-label="view"
+                  color="primary"
+                  size="small"
+                  onClick={() => {
+
+                    handleOpen();
+                    fetchRecipe(cell.getValue(), row.original.Quantity);
+                  }}
+                >
+                  <VisibilityIcon />
+                </IconButton>
+              </Tooltip>
+
+            </div>
+          )
+        }
       },
       {
         header: "Quantity",
@@ -133,7 +234,7 @@ const MealPlan = ({ mealPlan }) => {
 
         AggregatedCell: ({ cell }) => {
           return <div><strong>Total Carbs:</strong> {cell.getValue()}</div>
-        } 
+        }
       },
       {
         header: "Fats",
@@ -159,47 +260,75 @@ const MealPlan = ({ mealPlan }) => {
     []);
 
   return (
-    <div>
-      <MaterialReactTable
-        title="Meal Plan"
-        data={data}
-        columns={columns}
-        enableColumnResizing
+    <>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          {recipeLoading ? <CircularProgress /> : (
 
-        enableGrouping
+            <>
+              <Typography id="modal-modal-title" variant="h6" component="h2">
+                Recipe of  {recipeName}
+              </Typography>
+              <img src={foodImage} alt={recipeName} />
 
-        enableStickyHeader
+              <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+                {recipe?.split("\n").map((item, i) => {
+                  if (i)
+                    return <div key={i}>{item}</div>
+                })}
 
-        enableStickyFooter
+              </Typography>
+            </>)
+          }
+        </Box>
+      </Modal>
+      <div>
+        <MaterialReactTable
+          title="Meal Plan"
+          data={data}
+          columns={columns}
+          enableColumnResizing
 
-        initialState={{
+          enableGrouping
 
-          density: 'compact',
+          enableStickyHeader
 
-          expanded: true, //expand all groups by default
+          enableStickyFooter
 
-          grouping: ['Day'], //an array of columns to group by by default (can be multiple)
+          initialState={{
 
-          pagination: { pageIndex: 0, pageSize: 20 },
+            density: 'compact',
 
-          // sorting: [{ id: 'Day', desc: false }], //sort by state by default
+            expanded: true, //expand all groups by default
 
-        }}
+            grouping: ['Day'], //an array of columns to group by by default (can be multiple)
 
-        muiToolbarAlertBannerChipProps={{ color: 'primary' }}
+            pagination: { pageIndex: 0, pageSize: 20 },
 
-        muiTableContainerProps={{ sx: { maxHeight: 700 } }}
+            // sorting: [{ id: 'Day', desc: false }], //sort by state by default
 
+          }}
 
-        //hide banner on the top that is showing the table is grouped by Day
-        // muiToolbarAlertBannerProps={{ hidden: true }}
-        state ={{
-          grouping: ['Day'], //an array of columns to group by by default (can be multiple) 
-        }}
-      />
+          muiToolbarAlertBannerChipProps={{ color: 'primary' }}
+
+          muiTableContainerProps={{ sx: { maxHeight: 700 } }}
 
 
-    </div>
+          //hide banner on the top that is showing the table is grouped by Day
+          // muiToolbarAlertBannerProps={{ hidden: true }}
+          state={{
+            grouping: ['Day'], //an array of columns to group by by default (can be multiple) 
+          }}
+        />
+
+
+      </div>
+    </>
   );
 };
 
