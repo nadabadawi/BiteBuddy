@@ -19,7 +19,7 @@ const BMI = ({ state = {}, setState = () => {} }) => {
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
-          rowGap: "0.1rem",
+          rowGap: "0.4rem",
         }}
       >
         <TextField
@@ -53,7 +53,7 @@ const BMI = ({ state = {}, setState = () => {} }) => {
         <br />
 
         <TextField
-          label="Height (meters)"
+          label="Height (cm)"
           variant="outlined"
           type={"number"}
           value={state.height}
