@@ -76,11 +76,11 @@ Quantity: "1 cup" */
 //group by day
 const CSVParse = (csv) => {
   const lines = csv.split("\n").filter((line) => line.length > 0);
-  const headers = lines[0].split(",");
+  const headers = lines[0].split(",").map(s => s.trim());
   const data = [];
   for (let i = 1; i < lines.length; i++) {
     const obj = {};
-    const currentline = lines[i].split(",");
+    const currentline = lines[i].split(",").map(s => s.trim());
     for (let j = 0; j < headers.length; j++) {
 
       if (headers[j] === "Calories" || headers[j] === "Carbs" || headers[j] === "Fats" || headers[j] === "Protein") {
@@ -110,12 +110,12 @@ const style = {
   display: 'flex',
   flexDirection: 'column'
 };
-const config = new Configuration({ apiKey: "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" })
+const config = new Configuration({ apiKey: "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" })
 
 const MealPlan = ({ mealPlan }) => {
-  // console.log(CSVParse(mealPlan))
+  console.log(CSVParse(mealPlan))
 
-  const data = CSVParse(csv);
+  const data = CSVParse(mealPlan);
 
   const [open, setOpen] = React.useState(false);
   const handleOpen = () => setOpen(true);
@@ -143,20 +143,32 @@ const MealPlan = ({ mealPlan }) => {
         size: '256x256'
       })
 console.log(img)
-      const result = await api.createCompletion({
-        model: "text-davinci-003",
+      // const result = await api.createCompletion({
+      //   model: "text-davinci-003",
 
-        prompt: `
+      //   prompt: `
+      //   I want you to act as my personal chef. 
+      //   I will tell you about a meal with its quantities, and you will tell me the exact recipe for me to cook it.
+      //   You should only reply with the recipe, and nothing else. The recipe should include the exact ingredients needed and a numbered list of steps to follow. 
+      //   Do not write explanations. My first request is ${food}. Quantity: ${quantity}
+      //   `,
+
+      //   max_tokens: 2000,
+      // })
+
+      const result = await api.createChatCompletion({
+        model: "gpt-3.5-turbo",
+        messages: [{role: "user", 
+        content: `
         I want you to act as my personal chef. 
         I will tell you about a meal with its quantities, and you will tell me the exact recipe for me to cook it.
         You should only reply with the recipe, and nothing else. The recipe should include the exact ingredients needed and a numbered list of steps to follow. 
         Do not write explanations. My first request is ${food}. Quantity: ${quantity}
-        `,
-
+        `}],
         max_tokens: 2000,
-      })
+      });
 
-      setRecipe(result.data.choices[0].text);
+      setRecipe(result.data.choices[0].message.content);
       setRecipeName(food);
       setfoodImage(img.data?.data?.[0]?.url);
     } finally {

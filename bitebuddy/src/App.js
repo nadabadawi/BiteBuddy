@@ -19,7 +19,7 @@ import "./App.css";
 import { OpenAIApi, Configuration } from "openai"
 import Loading from "./pages/Loading";
 
-const config = new Configuration({ apiKey: "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" })
+const config = new Configuration({ apiKey: "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" })
 function App() {
   // create steps for stepper
   const steps = ["Get BMI", "Food Preferences & Allergies", "Meal Plan"];
@@ -152,28 +152,36 @@ function App() {
                 variant="contained"
                 onClick={async () => {
                   setLoading(true)
-                  const BMI = formState.weight / (formState.height * formState.height);
+                  const height = formState.height / 100;
+                  const BMI = formState.weight / (height * height);
                   const api = new OpenAIApi(config)
 
                   try {
+                    console.log(formState.preferences)
+                    console.log(formState.allergies)
+                    console.log(formState.preferences.map(obj => obj.inputValue).join(", "))
+                    const preferences = formState.preferences.map(obj => obj.inputValue).join(", ");
+                    const allergies = formState.allergies.map(obj => obj.inputValue).join(", ");
+                    const result = await api.createChatCompletion({
+                      model: "gpt-3.5-turbo",
+                      messages: [{role: "user", 
+                      content: `
+                      I want you to act as my personal nutritionist. I will tell you about my dietary preferences, allergies, my BMI, gender and target so that you know and determine my calories intake, and you will suggest a one-week meal plan specifying food of each day for me to try that will cause me to reach my target. You should only reply with the meal plan you recommend, including the quantities and the nutritional facts of each meal, and nothing else.
 
-                    const result = await api.createCompletion({
-                      model: "text-davinci-003",
-                      prompt: `
-                      I want you to act as my personal nutritionist. 
-                      I will tell you about my dietary preferences and allergies and my BMI so that you know my calories intake, and you will suggest a one week meal plan specifying food of each day for me to try that will cause me to ${formState.loseOrGain} my weight.
-                      You should only reply with the meal plan you recommend including the quantities and the nutritional facts of each meal, and nothing else. 
-                      The meal plan should be output in the format of a csv. In the table you must output the following columns: Day, Meal, Food, Quantity, Calories, Protein, Carbs, Fats. Do not write explanations. 
-                
+                      After generating the meal plan for each day, check if the total calories match the following criteria based on the person's input:
                       
-                      My first request is 'BMI: ${BMI}, Preferences: ${formState.preferences.join(", ")}, Allergies: ${formState.allergies.join(", ")}'
+                      If the person's goal is to gain weight, they should consume around 3000-3500 total calories per day.
+                      If the person's goal is to maintain weight, they should consume around 2000-2500 total calories per day.
+                      If the person's goal is to lose weight, they should consume around 1500-2000 total calories per day.
+                      If the total calories are too high or too low for any day, adjust the quantities or replace some foods with lower or higher calorie options until all criteria are met. Do not go below or above these ranges as they are based on health recommendations.
                       
-                      `,
+                      The meal plan should be output in the format of a csv. In the table you must output the following columns with the same exact names without any modifications: Day, Meal, Calories, Food, Quantity, Carbs, Fats, Protein. Make sure to provide the meal plan for the whole week and not just one day. Don't return any row with empty values.
+                      
+                      My first request is: 'BMI: ${BMI}; Preferences: ${preferences}; Allergies: ${allergies}; Gender: ${formState.gender}; Goal: ${formState.loseOrGain} weight;'                      
+                      `}],
                       max_tokens: 2000,
-
-
-                    })
-                    setMealPlan(result.data.choices[0].text)
+                    });
+                    setMealPlan(result.data.choices[0].message.content)
                     handleNext()
                   }
                   catch (e) {
