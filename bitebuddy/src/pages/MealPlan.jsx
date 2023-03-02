@@ -1,20 +1,18 @@
-// create BMI component
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'https://esm.sh/remark-gfm@3'
-import React, { useMemo } from 'react';
+import React, { useMemo } from "react";
 
-import MaterialReactTable from 'material-react-table';
-import { Box } from '@mui/system';
-import { Button, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
-import VisibilityIcon from '@mui/icons-material/Visibility';
+import MaterialReactTable from "material-react-table";
+import { Box } from "@mui/system";
+import {
+  CircularProgress,
+  IconButton,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
-import { Modal, } from '@mui/material';
+import { Modal } from "@mui/material";
 
-
-
-
-import { OpenAIApi, Configuration } from "openai"
-
+import { generatRecipe, generateImage } from "../api/models";
 
 const csv = `
 Day,Meal,Food,Quantity,Calories,Protein,Carbs,Fats
@@ -52,7 +50,7 @@ Sunday,Breakfast,Sliced Avocado on Toast,1/2 avocado and 2 slices of toast,250,7
 Sunday,Snack,Mixed Nuts,1 oz,171,4.2,4,15.4
 Sunday,Lunch,Tuna Salad Sandwich,1 sandwich,337.4,22.4,33.2,13.8
 Sunday,Snack,Strawberries,1 cup,53,1.1,13,0.5
-Sunday,Dinner,Grilled Skinless Chicken Breast,4 oz,166,31.4,0,3.7 2`
+Sunday,Dinner,Grilled Skinless Chicken Breast,4 oz,166,31.4,0,3.7 2`;
 
 /*
   CSV format:
@@ -76,44 +74,44 @@ Quantity: "1 cup" */
 //group by day
 const CSVParse = (csv) => {
   const lines = csv.split("\n").filter((line) => line.length > 0);
-  const headers = lines[0].split(",").map(s => s.trim());
+  const headers = lines[0].split(",").map((s) => s.trim());
   const data = [];
   for (let i = 1; i < lines.length; i++) {
     const obj = {};
-    const currentline = lines[i].split(",").map(s => s.trim());
+    const currentline = lines[i].split(",").map((s) => s.trim());
     for (let j = 0; j < headers.length; j++) {
-
-      if (headers[j] === "Calories" || headers[j] === "Carbs" || headers[j] === "Fats" || headers[j] === "Protein") {
+      if (
+        headers[j] === "Calories" ||
+        headers[j] === "Carbs" ||
+        headers[j] === "Fats" ||
+        headers[j] === "Protein"
+      ) {
         //TODO: parse to float with 2 decimal places
-        obj[headers[j]] = parseFloat(currentline[j])
-
-      } else
-
-        obj[headers[j]] = currentline[j];
+        obj[headers[j]] = parseFloat(currentline[j]);
+      } else obj[headers[j]] = currentline[j];
     }
     data.push(obj);
   }
   return data;
 };
 const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
   width: 400,
-  bgcolor: 'background.paper',
-  border: '2px solid #000',
+  bgcolor: "background.paper",
+  border: "2px solid #000",
   boxShadow: 24,
   p: 4,
-  alignItems: 'center',
-  justifyContent: 'center',
-  display: 'flex',
-  flexDirection: 'column'
+  alignItems: "center",
+  justifyContent: "center",
+  display: "flex",
+  flexDirection: "column",
 };
-const config = new Configuration({ apiKey: "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" })
-
 const MealPlan = ({ mealPlan }) => {
-  console.log(CSVParse(mealPlan))
+  mealPlan = csv;
+  console.log(CSVParse(mealPlan));
 
   const data = CSVParse(mealPlan);
 
@@ -123,62 +121,30 @@ const MealPlan = ({ mealPlan }) => {
   const [recipe, setRecipe] = React.useState(null);
   const [foodImage, setfoodImage] = React.useState(null);
   const [recipeName, setRecipeName] = React.useState(null);
-  // console.log()
   const [recipeLoading, setRecipeLoading] = React.useState(false);
 
   const handleClose = () => {
     setOpen(false);
     setRecipe(null);
     setRecipeName(null);
-  }
+  };
 
   const fetchRecipe = async (food, quantity) => {
     try {
       setRecipeLoading(true);
-      const api = new OpenAIApi(config)
 
-      const img = await api.createImage({
-        prompt: `Image of ${food}`,
-        n: 1,
-        size: '256x256'
-      })
-console.log(img)
-      // const result = await api.createCompletion({
-      //   model: "text-davinci-003",
+      const img = await generateImage({ food });
 
-      //   prompt: `
-      //   I want you to act as my personal chef. 
-      //   I will tell you about a meal with its quantities, and you will tell me the exact recipe for me to cook it.
-      //   You should only reply with the recipe, and nothing else. The recipe should include the exact ingredients needed and a numbered list of steps to follow. 
-      //   Do not write explanations. My first request is ${food}. Quantity: ${quantity}
-      //   `,
-
-      //   max_tokens: 2000,
-      // })
-
-      const result = await api.createChatCompletion({
-        model: "gpt-3.5-turbo",
-        messages: [{role: "user", 
-        content: `
-        I want you to act as my personal chef. 
-        I will tell you about a meal with its quantities, and you will tell me the exact recipe for me to cook it.
-        You should only reply with the recipe, and nothing else. The recipe should include the exact ingredients needed and a numbered list of steps to follow. 
-        Do not write explanations. My first request is ${food}. Quantity: ${quantity}
-        `}],
-        max_tokens: 2000,
-      });
+      const result = await generatRecipe({ food, quantity });
 
       setRecipe(result.data.choices[0].message.content);
       setRecipeName(food);
       setfoodImage(img.data?.data?.[0]?.url);
     } finally {
-
       setRecipeLoading(false);
     }
-
-  }
-  console.log(foodImage)
-
+  };
+  console.log(foodImage);
 
   const columns = useMemo(
     () => [
@@ -189,20 +155,20 @@ console.log(img)
       {
         header: "Meal",
         accessorKey: "Meal",
-
-
       },
       {
+        header: "Calories",
 
-        header: 'Calories',
-
-        accessorKey: 'Calories',
+        accessorKey: "Calories",
         aggregationFn: "sum",
 
         AggregatedCell: ({ cell }) => {
-          return <div><strong>Total Calories:</strong> {cell.getValue()}</div>
-        }
-
+          return (
+            <div>
+              <strong>Total Calories:</strong> {cell.getValue()}
+            </div>
+          );
+        },
       },
       {
         header: "Food",
@@ -210,7 +176,8 @@ console.log(img)
 
         Cell: ({ cell, row }) => {
           return (
-            <div><strong>{cell.getValue()}</strong>
+            <div>
+              <strong>{cell.getValue()}</strong>
 
               <Tooltip title="View" aria-label="view">
                 <IconButton
@@ -218,7 +185,6 @@ console.log(img)
                   color="primary"
                   size="small"
                   onClick={() => {
-
                     handleOpen();
                     fetchRecipe(cell.getValue(), row.original.Quantity);
                   }}
@@ -226,10 +192,9 @@ console.log(img)
                   <VisibilityIcon />
                 </IconButton>
               </Tooltip>
-
             </div>
-          )
-        }
+          );
+        },
       },
       {
         header: "Quantity",
@@ -245,8 +210,12 @@ console.log(img)
         aggregationFn: "sum",
 
         AggregatedCell: ({ cell }) => {
-          return <div><strong>Total Carbs:</strong> {cell.getValue()}</div>
-        }
+          return (
+            <div>
+              <strong>Total Carbs:</strong> {cell.getValue()}
+            </div>
+          );
+        },
       },
       {
         header: "Fats",
@@ -254,9 +223,12 @@ console.log(img)
         aggregationFn: "sum",
 
         AggregatedCell: ({ cell }) => {
-          return <div><strong>Total Fats:</strong> {cell.getValue()}</div>
-        }
-
+          return (
+            <div>
+              <strong>Total Fats:</strong> {cell.getValue()}
+            </div>
+          );
+        },
       },
       {
         header: "Protein",
@@ -264,12 +236,16 @@ console.log(img)
         aggregationFn: "sum",
 
         AggregatedCell: ({ cell }) => {
-          return <div><strong>Total Protein:</strong> {cell.getValue()}</div>
-        }
+          return (
+            <div>
+              <strong>Total Protein:</strong> {cell.getValue()}
+            </div>
+          );
+        },
       },
-
     ],
-    []);
+    []
+  );
 
   return (
     <>
@@ -280,66 +256,74 @@ console.log(img)
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          {recipeLoading ? <CircularProgress /> : (
-
+          {recipeLoading ? (
+            <CircularProgress />
+          ) : (
             <>
               <Typography id="modal-modal-title" variant="h6" component="h2">
-                Recipe of  {recipeName}
+                Recipe of {recipeName}
               </Typography>
               <img src={foodImage} alt={recipeName} />
 
               <Typography id="modal-modal-description" sx={{ mt: 2 }}>
                 {recipe?.split("\n").map((item, i) => {
-                  if (i)
-                    return <div key={i}>{item}</div>
+                  if (i) return <div key={i}>{item}</div>;
+                  return null;
                 })}
-
               </Typography>
-            </>)
-          }
+            </>
+          )}
         </Box>
       </Modal>
-      <div>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+      
+        }}
+      >
         <MaterialReactTable
           title="Meal Plan"
           data={data}
           columns={columns}
           enableColumnResizing
-
           enableGrouping
-
           enableStickyHeader
-
           enableStickyFooter
-
           initialState={{
-
-            density: 'compact',
+            density: "compact",
 
             expanded: true, //expand all groups by default
 
-            grouping: ['Day'], //an array of columns to group by by default (can be multiple)
+            grouping: ["Day"], //an array of columns to group by by default (can be multiple)
 
             pagination: { pageIndex: 0, pageSize: 20 },
 
             // sorting: [{ id: 'Day', desc: false }], //sort by state by default
-
           }}
-
-          muiToolbarAlertBannerChipProps={{ color: 'primary' }}
-
+          muiToolbarAlertBannerChipProps={{ color: "primary" }}
           muiTableContainerProps={{ sx: { maxHeight: 700 } }}
-
-
+          muiTablePaperProps={{
+            sx: {
+              width: "100%",
+              //make width responsive
+              minWidth: {
+                xs: 300,
+                sm: 500,
+                md: 1500,
+                
+              }
+            },
+          }}
           //hide banner on the top that is showing the table is grouped by Day
           // muiToolbarAlertBannerProps={{ hidden: true }}
           state={{
-            grouping: ['Day'], //an array of columns to group by by default (can be multiple) 
+            grouping: ["Day"], //an array of columns to group by by default (can be multiple)
           }}
         />
-
-
-      </div>
+      </Box>
     </>
   );
 };
