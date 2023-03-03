@@ -1,18 +1,18 @@
 {
   "files": {
-    "main.css": "/react-gh-pages/static/css/main.81b3d57d.css",
-    "main.js": "/react-gh-pages/static/js/main.d74a64f5.js",
-    "static/js/787.16da1564.chunk.js": "/react-gh-pages/static/js/787.16da1564.chunk.js",
-    "static/media/notification.mp3": "/react-gh-pages/static/media/notification.aa8f8c40faaac8a754c9.mp3",
-    "static/media/chat-icon.svg": "/react-gh-pages/static/media/chat-icon.f032be1de526b90c22006c9ce07d23d8.svg",
-    "static/media/logo-no-bg.svg": "/react-gh-pages/static/media/logo-no-bg.4d881dc9874adc7364eb819a01793fa1.svg",
-    "index.html": "/react-gh-pages/index.html",
-    "main.81b3d57d.css.map": "/react-gh-pages/static/css/main.81b3d57d.css.map",
-    "main.d74a64f5.js.map": "/react-gh-pages/static/js/main.d74a64f5.js.map",
-    "787.16da1564.chunk.js.map": "/react-gh-pages/static/js/787.16da1564.chunk.js.map"
+    "main.css": "/BiteBuddy/static/css/main.81b3d57d.css",
+    "main.js": "/BiteBuddy/static/js/main.ef3ea24a.js",
+    "static/js/787.16da1564.chunk.js": "/BiteBuddy/static/js/787.16da1564.chunk.js",
+    "static/media/notification.mp3": "/BiteBuddy/static/media/notification.aa8f8c40faaac8a754c9.mp3",
+    "static/media/chat-icon.svg": "/BiteBuddy/static/media/chat-icon.f032be1de526b90c22006c9ce07d23d8.svg",
+    "static/media/logo-no-bg.svg": "/BiteBuddy/static/media/logo-no-bg.4d881dc9874adc7364eb819a01793fa1.svg",
+    "index.html": "/BiteBuddy/index.html",
+    "main.81b3d57d.css.map": "/BiteBuddy/static/css/main.81b3d57d.css.map",
+    "main.ef3ea24a.js.map": "/BiteBuddy/static/js/main.ef3ea24a.js.map",
+    "787.16da1564.chunk.js.map": "/BiteBuddy/static/js/787.16da1564.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.81b3d57d.css",
-    "static/js/main.d74a64f5.js"
+    "static/js/main.ef3ea24a.js"
   ]
 }
