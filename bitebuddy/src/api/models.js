@@ -1,7 +1,7 @@
 import { Configuration, OpenAIApi } from "openai";
 
 const config = new Configuration({
-  apiKey: "FILL HERE",
+  apiKey: process.env.REACT_APP_APIKey,
 });
 
 const api = new OpenAIApi(config);
