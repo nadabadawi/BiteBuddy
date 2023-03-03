@@ -110,7 +110,7 @@ const style = {
   flexDirection: "column",
 };
 const MealPlan = ({ mealPlan }) => {
-  mealPlan = csv;
+  // mealPlan = csv;
   console.log(CSVParse(mealPlan));
 
   const data = CSVParse(mealPlan);
