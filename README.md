@@ -13,6 +13,6 @@ This project was created by a group of six students studying at the American Uni
 - Kirolos Mikhail - https://github.com/KirolosAssaad
 - Maya Makram - https://github.com/mayammakram
 - Mohamed Sherif - https://github.com/MohamedSherifNoureldin 
-- Nada Badwi - https://github.com/nadabadawi
+- Nada Badawi - https://github.com/nadabadawi
 - Omar Miniesy - https://github.com/OmarMiniesy
 - Youssef Agiza - https://github.com/Youssef-Agiza
